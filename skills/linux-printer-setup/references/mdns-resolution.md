@@ -2,11 +2,7 @@
 
 ## Isolate the failing layer
 
-- Avahi without avahi-utils: query the daemon socket directly:
-  ```bash
-  printf 'RESOLVE-HOSTNAME-IPV4 host.local\n' | python3 -c "import socket,sys;s=socket.socket(socket.AF_UNIX);s.connect('/run/avahi-daemon/socket');s.sendall(sys.stdin.buffer.read());print(s.recv(200))"
-  ```
-  Or use D-Bus: `gdbus call --system --dest org.freedesktop.Avahi --object-path / --method org.freedesktop.Avahi.Server.ResolveHostName -- -1 0 host.local 0 0`.
+- Avahi without avahi-utils: ask the daemon over D-Bus (no extra package): `gdbus call --system --dest org.freedesktop.Avahi --object-path / --method org.freedesktop.Avahi.Server.ResolveHostName -- -1 0 host.local 0 0`.
 - System path: `getent hosts host.local`. If Avahi resolves the name but getent fails, the break is in nss-mdns.
 - `strace -f -e trace=connect getent hosts host.local`. If it shows connects to port 53 (resolv.conf nameserver) and none to the Avahi socket, nss-mdns has disabled itself.
 

@@ -27,5 +27,5 @@ The option keys and values come from the upstream source at `src/libretro/config
 
 ## System files
 - With `native`, the core looks in `system/melonDS DS/` first, then `system/`, for `bios7.bin` (md5 df692a80...) and `bios9.bin` (md5 a392174e...).
-- If the log shows `Corrupted firmware detected!`, the pack's `firmware.bin` is bad. Use `builtin` unless Karl supplies a clean firmware dump.
+- If the log shows the line `Corrupted firmware detected` the pack's `firmware.bin` is bad. Use `builtin` unless Karl supplies a clean firmware dump.
 - `PCap: init failed` and the Wi-Fi adapter warnings are harmless inside the Flatpak.

@@ -52,7 +52,7 @@ Quarantine is the isolation layer, not the whole posture.
 - **Approval:** spend and payment actions always require an explicit, per-action human
   confirmation. Never configure automatic approval for anything that moves money or
   grants access.
-- **Sudo:** when a NOPASSWD rule is required, scope it to the exact command needed.
+- **Sudo:** when a passwordless sudo rule is required, scope it to the exact command needed.
   Understand that a scoped rule does not permit the probes around it, so either grant
   those separately or drop the probe.
 - **Blast-radius review after any change:** anything new that a session can reach is new

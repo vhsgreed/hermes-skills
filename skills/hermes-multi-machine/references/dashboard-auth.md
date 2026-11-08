@@ -8,7 +8,7 @@
 - `dashboard.basic_auth.username: <user>`
 - `dashboard.basic_auth.password_hash: scrypt$...`: alternative to plaintext; unrecoverable by design, rotate when lost, do not hunt for the old value.
 
-`~/.hermes/.env` (env variants):
+`$HERMES_HOME/.env` (env variants):
 
 - `HERMES_DASHBOARD_BASIC_AUTH_USERNAME`
 - `HERMES_DASHBOARD_BASIC_AUTH_PASSWORD`: plaintext alternative to `password_hash`. Do not set both mechanisms at once; precedence is not documented.

@@ -81,10 +81,10 @@ Or copy a folder into `~/.hermes/skills/<category>/`.
   skip that step or map it to your own setup.
 - **Sweden-specific skills are not legal or tax advice.** They cite sources, so check
   the current year's rules against those sources.
-- **Scanned, not audited.** The pack passes
-  [skillguard](https://github.com/vhsgreed/skillguard) except for four findings, all
-  quoted attack strings in prose that documents them (`agent-skill-tooling`) or a
-  verification checklist (`session-handovers`). Pin with
+- **Scanned, not audited.** All 28 pass Hermes' own install-time skills guard
+  (community trust level). Running [skillguard](https://github.com/vhsgreed/skillguard)
+  still flags a few lines in `agent-skill-tooling` and `session-handovers`, which
+  describe attack patterns and a verification checklist. Pin with
   [skill-lock](https://github.com/vhsgreed/skill-lock) if you install them, and read a
   skill before you let an agent act on it.
 

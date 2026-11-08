@@ -66,7 +66,7 @@ A recurring digest repeats itself unless it compares today's items with its own 
 ### 2c. Cloud writer with local fallback (when approved)
 
 Pattern: OpenRouter chat call first, gemma on any failure, per section.
-- Read the API key from `~/.hermes/.env` inside the script; cron has no shell env. Verify with `env -i HOME=... PATH=/usr/bin:/bin python3 -c ...`.
+- Read the API key from `$HERMES_HOME/.env` inside the script; cron has no shell env. Verify with `env -i HOME=... PATH=/usr/bin:/bin python3 -c ...`.
 - Retry 429/5xx up to 3 times with backoff (that is upstream congestion). Fall back immediately on other 4xx, `finish_reason != "stop"`, or content under ~400 chars. Test the fallback with a bad key and with no key.
 - **Keep reasoning OFF for digest writing.** Some providers leak the thinking into `content` even with `reasoning.exclude`, which fills `max_tokens` before the brief is written and would mail scratch work.
 - Log provider and `usage.cost` per call. Name the writing model in each section header, and update the email footer and the crontab cost comment, so the archive shows which model wrote what.

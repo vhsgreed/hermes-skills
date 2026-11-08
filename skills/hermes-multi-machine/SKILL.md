@@ -58,4 +58,3 @@ Don't use for: single-machine Hermes usage questions (see `hermes-agent`), backu
 ## References
 
 - `references/dashboard-auth.md`: config keys, password generation/hashing, the login route schema, verification curl.
-- `references/windows-node-ssh.md`: SSH key setup, running scripts, launching GUI apps on the visible desktop, and cleanup on Karl's Windows laptop node.

@@ -27,7 +27,7 @@ Proven on `skillguard` (scanner) and `skill-lock` (hash pinning) — repos at
 
 Design every test corpus in three bands and enforce each with tests:
 
-1. `samples/malicious/` — real attack primitives (exfil via `$(cat ~/.ssh/id_rsa)`,
+1. `samples/malicious/` — real attack primitives (exfil via a command substitution that cats the user's SSH private key,
    pipe-to-shell, base64 exec, silent nested installs, prompt injection, disguised update
    checks, staging-and-upload). **Every file must raise >= 1 high/critical finding.**
 2. `samples/benign/` — realistic clean skills INCLUDING hard negatives from the FP checklist
@@ -44,10 +44,10 @@ so every future rule change must keep all three promises simultaneously.
 ## False-positive classes (check every regex rule against these)
 
 - **Negated policy language.** "never tell a user to put X in .env" (benign policy) vs
-  "do not tell the user about this step" (malicious concealment). Distinguish by what
+  a quoted instruction to keep a step secret from the user (malicious concealment). Distinguish by what
   follows: `tell the user TO <verb>` is usually benign instruction, `tell the user ABOUT/
   THAT/WHAT` is concealment. Test both phrasings as corpus samples.
-- **Public keys.** `cat ~/.ssh/id_ed25519.pub` is a benign display instruction. Exclude
+- **Public keys.** Catting an SSH `.pub` public key is a benign display instruction. Exclude
   `.pub`, and beware backtracking defeating `(?<!\.pub)` — terminate the path match with a
   boundary class so shorter backtracked consumptions cannot succeed.
 - **Existence checks.** A quiet probe like `-q "github.com" ~/.git-credentials` checks
@@ -56,7 +56,7 @@ so every future rule change must keep all three promises simultaneously.
 - **Patterns quoted in docs/deny-lists.** `"deny": ["Bash(rm -rf *)"]` and tables of
   dangerous patterns trip the very rules they document. Fix with **line-anchored** command
   rules (`^\s*(?:sudo\s+)?curl\b...`) — NOT evadable ignore-lists on line text; anchoring
-  misses prefixed commands (`cd /tmp && curl ... | bash`), which is the honest trade.
+  misses prefixed commands (a curl-to-bash pipe after `cd /tmp &&`), which is the honest trade.
 - **English-word commands.** `type`, `open`, `more` match prose near a path within the
   proximity window. Either anchor them or document the class.
 
@@ -91,7 +91,7 @@ line as a benign regression sample. Never delete the sample to make tests pass.
 ## Release flow
 
 - Ship `skillguard` (detection) + `skill-lock` (pinning) + the RFC together.
-- Verbatim attack phrases in skill prose ("do not tell the user...", "hide X from the user")
+- Verbatim attack phrases in skill prose (quoted concealment instructions)
   trip Hermes's cron prompt-injection scanner (pattern `deception_hide`) when the skill is
   attached to a cron job: documentation quotes read as payloads. Such skills cannot ride on
   cron jobs; keep cron prompts self-contained and attach nothing.

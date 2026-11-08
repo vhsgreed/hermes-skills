@@ -79,8 +79,8 @@ columns/chunks updated) stays < 0.5 ms. Generating a 512x512 map + 60k-voxel pou
 
 ## Test harness (Godot web + Playwright)
 - Playwright does not reliably see Godot's web console output: write results with
-  `JavaScriptBridge.eval("window.__x = " + JSON.stringify(d))` and poll `window.__x`.
-- Read URL params via `JavaScriptBridge.eval("new URLSearchParams(location.search).get('k')")`
+  a `JavaScriptBridge.eval(js)` call where `js` assigns `window.__x` from `JSON.stringify(d)`, and poll `window.__x`.
+- Read URL params via `JavaScriptBridge.eval(js)` with `js` reading `new URLSearchParams(location.search).get('k')`
   on web and `OS.get_cmdline_user_args()` (`-- --k=v`) natively; the same `?test=` modes run
   in both.
 - Headless Chrome with SwiftShader is too slow for a Godot web build; use headless Chrome
