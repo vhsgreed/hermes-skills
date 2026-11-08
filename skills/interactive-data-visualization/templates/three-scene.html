@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<!-- Single-file three.js scene skeleton.
+     Build with a generator that replaces /*__LIB__*/ with three.min.js and
+     /*__DATA__*/ with your payload:
+       DATA = {start, end, nodes:[{id,label,parent,depth,x,z,files:[{name}]}], events:[{t,key,kind,label}]}
+-->
+<html><head><meta charset="utf-8"><title>Scene</title>
+<style>
+ html,body{margin:0;height:100%;background:#0b0c11;color:#c9cbd6;
+   font:13px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;overflow:hidden}
+ #app{display:flex;height:100vh} #stage{flex:1;position:relative} canvas{display:block}
+ #labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+ .nlabel{position:absolute;left:0;top:0;transform:translate(-50%,-50%);background:rgba(13,15,21,.94);
+   border:1px solid rgba(132,146,190,.5);border-radius:6px;padding:2px 7px 3px;white-space:nowrap;
+   font-size:11.5px;font-weight:600;color:#f1f3fa;box-shadow:0 2px 10px rgba(0,0,0,.55)}
+ .nlabel small{font-weight:500;color:#868ba3;margin-left:6px;font-size:10.5px}
+ #side{width:250px;border-left:1px solid #1e2029;background:#0d0e14;overflow:hidden;font-size:11px}
+ #transport{position:absolute;left:0;right:0;bottom:0;padding:10px 14px 12px;
+   background:linear-gradient(180deg,rgba(11,12,17,0),rgba(11,12,17,.94) 40%)}
+ #bars{display:flex;align-items:flex-end;gap:1px;height:44px;cursor:pointer}
+ #bars i{flex:1;background:#2c4a6e;min-height:1px}
+</style></head>
+<body><div id="app">
+<div id="stage"><div id="labels"></div>
+<div id="transport"><div id="bars"></div></div></div>
+<div id="side"></div>
+</div>
+<script>/*__LIB__*/</script>
+<script>
+const DATA = /*__DATA__*/;
+const PITCH = 1.42, HALF = (DATA.end - DATA.start) / 5.5, DUR = 34;
+const stage = document.getElementById('stage');
+
+const scene = new THREE.Scene();
+const cam = new THREE.PerspectiveCamera(38, 1, .1, 500);
+const rnd = new THREE.WebGLRenderer({antialias:true});
+rnd.setPixelRatio(Math.min(devicePixelRatio, 2)); stage.appendChild(rnd.domElement);
+scene.add(new THREE.HemisphereLight(0xc6d8ff, 0x1a1c24, 1.25));
+const key = new THREE.DirectionalLight(0xffffff, 1.5); key.position.set(-14, 26, 18); scene.add(key);
+scene.add(new THREE.GridHelper(180, 60, 0x1b1e28, 0x14161d));
+
+// ---- screen-space label layer (never sprites) ----
+const _v = new THREE.Vector3();
+function project(x, y, z){
+  const r = rnd.domElement.getBoundingClientRect();
+  _v.set(x, y, z).project(cam);
+  return [(_v.x*.5+.5)*r.width, (-_v.y*.5+.5)*r.height, _v.z];
+}
+const labels = {};
+function addLabel(id, text, count, x, z){
+  const el = document.createElement('div');
+  el.className = 'nlabel'; el.innerHTML = text + (count ? `<small>${count}</small>` : '');
+  document.getElementById('labels').appendChild(el);
+  labels[id] = {el, x, z, last: -1e9};
+}
+
+// ---- marks ----
+const cube = new THREE.BoxGeometry(1,1,1), marks = {};
+const GREY = new THREE.Color(0x59607a);
+function addCube(keyName, x, z, lines, colour){
+  const e = Math.min(PITCH*.97, .55 + .46*Math.cbrt(lines));
+  const mat = new THREE.MeshLambertMaterial({color:colour, transparent:true,
+    emissive:new THREE.Color(colour).multiplyScalar(.22)});
+  const m = new THREE.Mesh(cube, mat); m.scale.setScalar(e); m.position.set(x, e/2, z);
+  scene.add(m); marks[keyName] = {mesh:m, mat, base:e, baseCol:new THREE.Color(colour), last:-1e9};
+}
+// for each DATA.node: floor patch + addLabel(...) + addCube(...) grid placement
+
+// ---- playback ----
+const ev = DATA.events.slice().sort((a,b)=>a.t-b.t);
+const span = DATA.end - DATA.start;
+let ph = span, playing = false, t0 = 0, cur = 0;
+function touchAt(ts){
+  while (cur < ev.length && ev[cur].t <= ts) { const m = marks[ev[cur].key]; if (m) m.last = ev[cur].t; cur++; }
+  while (cur > 0 && ev[cur-1].t > ts) cur--;
+  return ev[Math.max(0, cur-1)];
+}
+function renderAt(ts){
+  touchAt(ts);
+  for (const k in marks){
+    const m = marks[k], dt = Math.max(0, ts - (m.last === -1e9 ? DATA.start : m.last));
+    m.mat.opacity = 0.46 + 0.54*Math.exp(-dt/HALF);
+    m.mat.color.copy(m.baseCol).lerp(GREY, (1-Math.exp(-dt/HALF))*0.35);
+  }
+  for (const id in labels){
+    const L = labels[id], [sx, sy, sz] = project(L.x, 1.05, L.z);
+    L.el.style.transform = `translate(-50%,-50%) translate(${sx.toFixed(1)}px,${sy.toFixed(1)}px)`;
+    L.el.style.opacity = sz > 1 ? 0 : 1;
+  }
+}
+function tick(){
+  requestAnimationFrame(tick);
+  if (playing){ ph = Math.min(span, (performance.now()-t0)/1000/DUR*span); if (ph >= span) playing = false; }
+  renderAt(DATA.start + ph);
+  rnd.render(scene, cam);
+}
+
+// ---- camera: frame the bounding box, hand-rolled orbit ----
+let az = -1.02, el = 0.66, dist = 40, cx = 0, cz = 0;
+function place(){ cam.position.set(cx+Math.sin(az)*Math.cos(el)*dist, Math.sin(el)*dist, cz+Math.cos(az)*Math.cos(el)*dist); cam.lookAt(cx, 1.2, cz); }
+(function(){
+  const xs = DATA.nodes.map(n=>n.x), zs = DATA.nodes.map(n=>n.z);
+  cx = (Math.min(...xs)+Math.max(...xs))/2; cz = (Math.min(...zs)+Math.max(...zs))/2;
+  dist = Math.max(34, Math.max(Math.max(...xs)-Math.min(...xs), (Math.max(...zs)-Math.min(...zs))*1.25) * 0.78);
+  place();
+})();
+let drag = false, lx = 0, ly = 0;
+rnd.domElement.addEventListener('mousedown', e => { drag = true; lx = e.clientX; ly = e.clientY; });
+addEventListener('mouseup', () => drag = false);
+addEventListener('mousemove', e => { if (!drag) return; az -= (e.clientX-lx)*.005; el = Math.max(.12, Math.min(1.35, el+(e.clientY-ly)*.004)); lx = e.clientX; ly = e.clientY; place(); });
+addEventListener('wheel', e => { dist = Math.max(22, Math.min(150, dist+e.deltaY*.05)); place(); }, {passive:true});
+
+function resize(){ const r = stage.getBoundingClientRect(); rnd.setSize(r.width, r.height); cam.aspect = r.width/r.height; cam.updateProjectionMatrix(); }
+addEventListener('resize', resize); resize();
+renderAt(DATA.end); tick();
+</script></body></html>
